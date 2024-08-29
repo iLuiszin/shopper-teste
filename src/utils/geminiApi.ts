@@ -3,11 +3,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 const genAI = new GoogleGenerativeAI(process.env.API_KEY as string)
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
-export default async function geminiApiRequest(image: string) {
-  const prompt = "Você deve gerenciar a leitura individualizada de consumo de água e gás, analisando a imagem e retornando o valor que deverá ser pago";
+export default async function geminiApiRequest(image: string): Promise<string | Error> {
+  const prompt = "Você deve gerenciar a leitura individualizada de consumo de água e gás, analisando a imagem e retornando apenas o número no medidor";
 
-  const base64Pattern = /^data:image\/[a-zA-Z]+;base64,/;
-  const cleanedImage = image.replace(base64Pattern, '');
+  const cleanedImage = image.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
 
   const response = {
     inlineData: {
@@ -17,17 +16,12 @@ export default async function geminiApiRequest(image: string) {
   };
 
   try {
-    console.time("GeminiAPI Response Time");
+    const { response: { text } } = await model.generateContent([prompt, response]);
 
-    const result = await model.generateContent([prompt, response]);
+    const cleanedResult = text().match(/\d+/)?.[0].replace(/^0+/, '') || '';
 
-    console.timeEnd("GeminiAPI Response Time");
-
-    console.log(result.response.text());
-
-    return result.response.text();
+    return cleanedResult;
   } catch (error) {
-    console.error("Erro ao fazer a solicitação à API do Gemini:", error);
     throw new Error("Falha ao processar a imagem com a API do Gemini.");
   }
 }
