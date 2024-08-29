@@ -8,9 +8,10 @@ datasource db {
 }
 
 model Reading {
-  id                String   @id @default(uuid())
+  measure_uuid      String  @id @default(uuid())
   measure_value     Int
   customer_code     String
   measure_type      String
-  measure_datetime  String
+  measure_datetime  DateTime
+  confirmed         Boolean  @default(false)
 }

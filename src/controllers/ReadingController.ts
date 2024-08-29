@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import geminiApiRequest from "../utils/geminiApi";
+import geminiApiRequest from "../services/geminiService";
 import customError from "../utils/customError";
-import prisma from "../utils/prisma";
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
+import prisma from "../db/prisma";
+import { validateUploadRequest } from "../utils/validationUtils";
+import { checkExistingReading, saveReading } from "../services/readingService";
+import { saveImageAndGenerateURL } from "../utils/imageUtils";
 
 type UploadRequestBody = {
   image: string;
@@ -18,73 +18,65 @@ export default class ReadingController {
     try {
       const { image, customer_code, measure_datetime, measure_type } = req.body as UploadRequestBody;
 
-      const base64ImageRegex = /^data:image\/(png|jpg|jpeg|gif|bmp|webp);base64,([A-Za-z0-9+/]+={0,2})$/;
-      const isBase64Image = base64ImageRegex.test(image);
-
-      if (!image || !customer_code || !measure_datetime || !measure_type) {
-        return customError(res, 400, "INVALID_DATA", "Todos os campos são obrigatórios.");
+      const validationError = validateUploadRequest(image, customer_code, measure_datetime, measure_type);
+      if (validationError) {
+        return customError(res, 400, "INVALID_DATA", validationError);
       }
 
-      if (typeof image !== 'string' || !isBase64Image) {
-        return customError(res, 400, "INVALID_DATA", "A imagem deve estar no formato base64 válido.");
+      const hasExistingReading = await checkExistingReading(customer_code, measure_type, new Date(measure_datetime).getMonth());
+      if (hasExistingReading) {
+        return customError(res, 409, "DOUBLE_REPORT", "Leitura do mês já realizada");
       }
 
-      if (typeof customer_code !== "string" || !customer_code.trim()) {
-        return customError(res, 400, "INVALID_DATA", "O código do cliente deve ser uma string válida.");
+      const measure_value = await geminiApiRequest(image);
+
+      if (!measure_value || measure_value instanceof Error) {
+        return customError(res, 500, "INTERNAL_ERROR", "Falha ao processar a imagem");
       }
 
-      if (!["WATER", "GAS"].includes(measure_type)) {
-        return customError(res, 400, "INVALID_DATA", "O tipo de medida deve ser 'WATER' ou 'GAS'.");
-      }
+      const { image_url, measure_uuid } = saveImageAndGenerateURL(image);
 
-      const response: string | Error = await geminiApiRequest(image);
-
-      if (!response || response instanceof Error) {
-        return customError(res, 500, "INTERNAL_ERROR", "Falha ao processar a imagem.");
-      }
-      const base64Data = Buffer.from(
-        image.replace(/^data:image\/\w+;base64,/, ""),
-        "base64"
-      );
-
-      const imageType = image.match(
-        /^data:image\/(png|jpg|jpeg|gif|bmp|webp);base64/
-      )?.[1];
-
-
-      const imageId = uuidv4();
-      const fileName = `${imageId}.${imageType}`;
-      const filePath = path.join(__dirname, "..", "uploads", fileName);
-
-      fs.writeFileSync(filePath, base64Data);
-
-      const tempUrl = `/uploads/${fileName}`;
-
-      setTimeout(() => {
-        fs.unlink(filePath, (err) => {
-          if (err) console.error("Erro ao excluir o arquivo:", err);
-        });
-      }, 60 * 60 * 1000);
-
-
-      await prisma.reading.create({
-        data: {
-          id: imageId,
-          measure_value: parseInt(response),
-          customer_code,
-          measure_type,
-          measure_datetime
-        }
-      });
+      await saveReading(measure_uuid, measure_value, customer_code, measure_type, measure_datetime);
 
       return res.status(200).json({
-        image_url: tempUrl,
-        measure_value: parseInt(response),
-        measure_uuid: imageId
+        image_url,
+        measure_value,
+        measure_uuid
       });
     } catch (error) {
       console.error(error);
-      return customError(res, 500, "INTERNAL_ERROR", "Falha ao processar a imagem.");
+      return customError(res, 500, "INTERNAL_ERROR", "Falha ao processar a imagem");
+    }
+  }
+
+  static async confirmReading(req: Request, res: Response) {
+    try {
+      const { measure_uuid, confirmed_value } = req.params;
+
+      if (!measure_uuid || !confirmed_value) {
+        return customError(res, 400, "INVALID_DATA", "Todos os campos são obrigatórios");
+      }
+
+      if (typeof measure_uuid !== "string" || typeof confirmed_value !== "number") {
+        return customError(res, 400, "INVALID_DATA", "Os valores enviados aparentemente são inválidos");
+      }
+
+      const reading = await prisma.reading.findUnique({ where: { measure_uuid } });
+
+      if (!reading) {
+        return customError(res, 404, "MEASURE_NOT_FOUND", "Leitura não encontrada");
+      }
+
+      if (reading.confirmed) {
+        return customError(res, 409, "MEASURE_ALREADY_CONFIRMED", "Leitura do mês já realizada");
+      }
+
+      await prisma.reading.update({ where: { measure_uuid }, data: { confirmed: true, measure_value: confirmed_value } });
+
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.error(error);
+      return customError(res, 500, "INTERNAL_ERROR", "Falha ao processar a confirmação da leitura");
     }
   }
 }

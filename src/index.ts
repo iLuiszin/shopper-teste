@@ -5,12 +5,10 @@ import path from 'path'
 import fs from 'fs'
 import 'dotenv/config'
 
-// Import Routes
 import ReadingRoutes from './routes/ReadingRoutes'
 
 const app: Express = express()
 
-// Middlewares
 app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json({ limit: "50mb" }));
@@ -22,8 +20,6 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 app.use("/uploads", express.static(uploadDir));
-
-// Routes
 app.use('/api', ReadingRoutes)
 
 
