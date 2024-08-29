@@ -3,6 +3,6 @@ import { Router } from "express";
 
 const route: Router = Router();
 
-route.post('/', ReadingController.upload);
+route.post('/upload', ReadingController.upload);
 
-
+export default route;
