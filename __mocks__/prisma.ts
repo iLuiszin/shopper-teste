@@ -1,5 +1,3 @@
-// __mocks__/prisma.ts
-
 const create = jest.fn()
 const findFirst = jest.fn()
 

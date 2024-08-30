@@ -5,6 +5,9 @@ import path from 'path'
 import fs from 'fs'
 import 'dotenv/config'
 
+process.env.DATABASE_URL_TEST = 'file:./test.db'
+process.env.DATABASE_URL = 'file:./dev.db'
+
 // Swagger config
 import swaggerUi from 'swagger-ui-express'
 import swaggerDocument from './swagger/swagger-output.json'

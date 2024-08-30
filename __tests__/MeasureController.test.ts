@@ -1,26 +1,36 @@
+// MeasureController.test.ts
+
 import request from 'supertest'
 import express from 'express'
 import MeasureController from '../src/controllers/MeasureController'
 import { uploadRequest } from '../__mocks__/requestMock'
-import prismaMock from '../__mocks__/prisma'
+import prisma from '../src/db/prisma' // Importa o prisma corretamente
 import 'dotenv/config'
 
 const app = express()
 app.use(express.json({ limit: '50mb' }))
 app.post('/upload', MeasureController.upload)
 
+// Mock das dependências
 jest.mock('../src/services/geminiService')
 jest.mock('../src/services/measureService')
 jest.mock('../src/utils/validationUtils')
 jest.mock('../src/utils/imageUtils')
 jest.mock('../src/utils/customError')
 
-jest.mock('../src/db/prisma', () => prismaMock)
+beforeAll(() => {
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST // Configura a variável de ambiente para o banco de dados de teste
+})
+
+afterAll(async () => {
+  await prisma.measure.deleteMany()
+  await prisma.$disconnect()
+})
 
 describe('MeasureController', () => {
   describe('upload', () => {
     it('should upload a new measure successfully', async () => {
-      prismaMock.measure.create.mockResolvedValue({
+      prisma.measure.create = jest.fn().mockResolvedValue({
         id: 1,
         ...uploadRequest,
         imageUrl: 'mockImageUrl',
@@ -29,7 +39,7 @@ describe('MeasureController', () => {
       const response = await request(app).post('/upload').send(uploadRequest)
 
       expect(response.status).toBe(200)
-      expect(prismaMock.measure.create).toHaveBeenCalledWith(
+      expect(prisma.measure.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             customer_code: '2523',
