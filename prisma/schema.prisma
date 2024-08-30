@@ -7,7 +7,7 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model Reading {
+model Measure {
   measure_uuid      String  @id @default(uuid())
   measure_value     Int
   customer_code     String
