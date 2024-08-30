@@ -14,5 +14,5 @@ model Measure {
   measure_type      String
   measure_datetime  DateTime
   image_url         String
-  has_confirmed         Boolean  @default(false)
+  has_confirmed     Boolean  @default(false)
 }

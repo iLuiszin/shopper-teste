@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "migrate:dev": "npx prisma migrate dev",
-    "migrate:test": "DATABASE_URL=file:./test.db npx prisma migrate dev",
+    "migrate:dev": "DATABASE_URL=file:./dev.db npx prisma migrate dev --name init",
+    "migrate:test": "DATABASE_URL=file:./test.db npx prisma migrate dev --name init",
     "test": "npm run migrate:test && jest --runInBand",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "npm run migrate:dev && nodemon --exec ts-node src/index.ts",
     "swagger": "ts-node src/swagger/swagger.ts"
   },
   "jest": {
