@@ -8,7 +8,6 @@
 <a href="#configure-o-arquivo-env"><li>Configure o arquivo .env</li></a>
  <a href="#criação-do-banco-de-dados"><li>Criação do Banco de Dados</li></a> 
  <a href="#execução-da-aplicação"><li>Execução da Aplicação</li></a> 
- <a href="#testes"><li>Testes</li></a>
   <a href="#estrutura-do-projeto"><li>Estrutura do Projeto</li></a> 
   </ul>
 
