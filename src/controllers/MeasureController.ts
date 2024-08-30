@@ -24,11 +24,48 @@ export default class MeasureController {
       in: 'body',
       description: 'Dados da medição',
       required: true,
-      schema: { $ref: '#/definitions/UploadRequest' }
+      '@schema': { 
+        type: 'object',
+        properties: { 
+          image: { 
+            type: 'string', 
+            example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAU..."
+          },
+          customer_code: { 
+            type: 'string', 
+            example: "CUST1234"
+          },
+          measure_datetime: { 
+            type: 'string', 
+            example: "2024-08-30T14:00:00Z"
+          },
+          measure_type: { 
+            type: 'string', 
+            example: "WATER"
+          }
+        },
+        required: ['image', 'customer_code', 'measure_datetime', 'measure_type']
+      }
     }
     #swagger.responses[200] = {
       description: 'Medição salva com sucesso',
-      schema: { $ref: '#/definitions/UploadResponse' }
+      '@schema': { 
+        type: 'object',
+        properties: { 
+          image_url: { 
+            type: 'string', 
+            example: "http://example.com/image_url"
+          },
+          measure_value: { 
+            type: 'number', 
+            example: 23.45
+          },
+          measure_uuid: { 
+            type: 'string', 
+            example: "4bbb02d-14c1-4a64-bc9f-58fb40269c3e"
+          }
+        }
+      }
     }
     #swagger.responses[400] = {
       description: 'Dados inválidos'
@@ -139,7 +176,20 @@ export default class MeasureController {
       in: 'body',
       description: 'Dados para confirmar a medição',
       required: true,
-      schema: { $ref: '#/definitions/ConfirmRequest'},
+      '@schema': { 
+        type: 'object',
+        properties: { 
+          measure_uuid: { 
+            type: 'string', 
+            example: "4bbb02d-14c1-4a64-bc9f-58fb40269c3e"
+          }, 
+          confirmed_value: { 
+            type: 'number', 
+            example: 10
+          }
+        },
+        required: ['measure_uuid', 'confirmed_value']
+      }
     }
     #swagger.responses[200] = {
       description: 'Medição confirmada com sucesso'
@@ -227,17 +277,53 @@ export default class MeasureController {
       in: 'path',
       description: 'Código do cliente',
       required: true,
-      schema: { type: 'string' }
+      '@schema': { type: 'string' }
     }
     #swagger.parameters['measure_type'] = {
       in: 'query',
       description: 'Tipo de medição (WATER ou GAS)',
       required: false,
-      schema: { type: 'string' }
+      '@schema': { type: 'string' }
     }
     #swagger.responses[200] = {
       description: 'Lista de medições',
-       schema: { $ref: '#/definitions/ListMeasuresResponse' }
+      '@schema': { 
+        type: 'object',
+        properties: { 
+          customer_code: { 
+            type: 'string', 
+            example: "CUST1234"
+          },
+          measures: { 
+            type: 'array',
+            items: { 
+              type: 'object',
+              properties: { 
+                measure_uuid: { 
+                  type: 'string', 
+                  example: "4bbb02d-14c1-4a64-bc9f-58fb40269c3e"
+                },
+                measure_datetime: { 
+                  type: 'string', 
+                  example: "2024-08-30T14:00:00Z"
+                },
+                measure_type: { 
+                  type: 'string', 
+                  example: "WATER"
+                },
+                has_confirmed: { 
+                  type: 'boolean', 
+                  example: false
+                },
+                image_url: { 
+                  type: 'string', 
+                  example: "http://example.com/image_url"
+                }
+              }
+            }
+          }
+        }
+      }
     }
     #swagger.responses[400] = {
       description: 'Tipo de medição não permitida'
@@ -249,6 +335,7 @@ export default class MeasureController {
       description: 'Erro interno do servidor'
     }
     */
+
     try {
       const { customer_code } = req.params as { customer_code: string }
       const { measure_type } = req.query as { measure_type?: string }
