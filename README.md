@@ -87,16 +87,6 @@ http://localhost:80/api-docs
 
 ---
 
-### Testes
-
-##### Inicie os testes:
-
-```
-$ npm test
-```
-
----
-
 ### Estrutura do projeto
 
 ##### Tecnologias Utilizadas
