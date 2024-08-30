@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import geminiApiRequest from '../services/geminiService'
 import customError from '../utils/customError'
 import prisma from '../db/prisma'
-import { validateRequest } from '../utils/validationUtils'
+import { validateRequest, isValidBase64Image } from '../utils/validationUtils'
 import { checkExistingMeasure, saveMeasure } from '../services/measureService'
 import { saveImageAndGenerateURL } from '../utils/imageUtils'
 
@@ -10,7 +10,7 @@ type ValidationRule = {
   required?: boolean
   type?: 'string' | 'number'
   pattern?: RegExp
-  custom?: (value: any) => boolean
+  custom?: (value: any) => boolean | Promise<boolean>
   customErrorMessage?: string
 }
 
@@ -29,8 +29,7 @@ export default class MeasureController {
         image: {
           required: true,
           type: 'string',
-          pattern:
-            /^data:image\/(png|jpg|jpeg|gif|bmp|webp);base64,([A-Za-z0-9+/]+={0,2})$/,
+          custom: async (value: string) => await isValidBase64Image(value),
           customErrorMessage: 'A imagem deve estar no formato base64 válido',
         },
         customer_code: {
@@ -49,7 +48,7 @@ export default class MeasureController {
         },
       }
 
-      const validationError = validateRequest(req.body, validationRules)
+      const validationError = await validateRequest(req.body, validationRules)
       if (validationError) {
         return customError(res, 400, 'INVALID_DATA', validationError)
       }
@@ -119,7 +118,7 @@ export default class MeasureController {
         },
       }
 
-      const validationError = validateRequest(req.body, validationRules)
+      const validationError = await validateRequest(req.body, validationRules)
       if (validationError) {
         return customError(res, 400, 'INVALID_DATA', validationError)
       }
@@ -187,7 +186,7 @@ export default class MeasureController {
         },
       }
 
-      const validationError = validateRequest(
+      const validationError = await validateRequest(
         { customer_code, measure_type },
         validationRules
       )

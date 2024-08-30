@@ -5,7 +5,7 @@ export default async function geminiApiRequest(image: string): Promise<number> {
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
   const prompt =
-    'Você deve gerenciar a leitura individualizada de consumo de água e gás, analisando a imagem e retornando apenas o número no medidor'
+    'You must manage the individual reading of water and gas consumption by analyzing the image and returning only the number on the meter.'
 
   const cleanedImage = image.replace(/^data:image\/[a-zA-Z]+;base64,/, '')
 
