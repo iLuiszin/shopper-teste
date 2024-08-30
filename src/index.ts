@@ -5,6 +5,10 @@ import path from 'path'
 import fs from 'fs'
 import 'dotenv/config'
 
+// Swagger config
+import swaggerUi from 'swagger-ui-express'
+import swaggerDocument from './swagger/swagger-output.json'
+
 import MeasureRoutes from './routes/MeasureRoutes'
 
 const app: Express = express()
@@ -20,7 +24,8 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 app.use('/uploads', express.static(uploadDir))
-app.use('/api', MeasureRoutes)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+app.use('/', MeasureRoutes)
 
 const PORT = process.env.PORT || 80
 

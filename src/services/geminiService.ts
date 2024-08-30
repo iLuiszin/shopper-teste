@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export default async function geminiApiRequest(image: string): Promise<number> {
-  const genAI = new GoogleGenerativeAI(process.env.API_KEY as string)
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string)
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
   const prompt =

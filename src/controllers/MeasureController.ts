@@ -16,6 +16,30 @@ type ValidationRule = {
 
 export default class MeasureController {
   static async upload(req: Request, res: Response) {
+    /* 
+    #swagger.auto = false
+    #swagger.tags = ['Measures']
+    #swagger.description = 'Faz upload de uma nova medição'
+    #swagger.parameters['body'] = {
+      in: 'body',
+      description: 'Dados da medição',
+      required: true,
+      schema: { $ref: '#/definitions/UploadRequest' }
+    }
+    #swagger.responses[200] = {
+      description: 'Medição salva com sucesso',
+      schema: { $ref: '#/definitions/UploadResponse' }
+    }
+    #swagger.responses[400] = {
+      description: 'Dados inválidos'
+    }
+    #swagger.responses[409] = {
+      description: 'Medição já realizada'
+    }
+    #swagger.responses[500] = {
+      description: 'Erro interno do servidor'
+    }
+    */
     try {
       const { image, customer_code, measure_datetime, measure_type } =
         req.body as {
@@ -79,14 +103,15 @@ export default class MeasureController {
         )
       }
 
-      const { image_url, measure_uuid } = saveImageAndGenerateURL(image)
+      const { image_url, measure_uuid } = await saveImageAndGenerateURL(image)
 
       await saveMeasure(
         measure_uuid,
         measure_value,
         customer_code,
         measure_type,
-        measure_datetime
+        measure_datetime,
+        image_url
       )
 
       return res.status(200).json({
@@ -106,6 +131,32 @@ export default class MeasureController {
   }
 
   static async confirm(req: Request, res: Response) {
+    /* 
+    #swagger.auto = false
+    #swagger.tags = ['Measures']
+    #swagger.description = 'Confirma uma medição existente'
+    #swagger.parameters['body'] = {
+      in: 'body',
+      description: 'Dados para confirmar a medição',
+      required: true,
+      schema: { $ref: '#/definitions/ConfirmRequest'},
+    }
+    #swagger.responses[200] = {
+      description: 'Medição confirmada com sucesso'
+    }
+    #swagger.responses[400] = {
+      description: 'Dados inválidos'
+    }
+    #swagger.responses[404] = {
+      description: 'Medição não encontrada'
+    }
+    #swagger.responses[409] = {
+      description: 'Medição já confirmada'
+    }
+    #swagger.responses[500] = {
+      description: 'Erro interno do servidor'
+    }
+    */
     try {
       const validationRules: Record<string, ValidationRule> = {
         measure_uuid: {
@@ -141,7 +192,7 @@ export default class MeasureController {
         )
       }
 
-      if (reading.confirmed) {
+      if (reading.has_confirmed) {
         return customError(
           res,
           409,
@@ -152,7 +203,7 @@ export default class MeasureController {
 
       await prisma.measure.update({
         where: { measure_uuid },
-        data: { confirmed: true, measure_value: confirmed_value },
+        data: { has_confirmed: true, measure_value: confirmed_value },
       })
 
       return res.status(200).json({ success: true })
@@ -168,6 +219,36 @@ export default class MeasureController {
   }
 
   static async getMeasuresFromCustomer(req: Request, res: Response) {
+    /* 
+    #swagger.auto = false
+    #swagger.tags = ['Measures']
+    #swagger.description = 'Obtém todas as medições para um cliente específico'
+    #swagger.parameters['customer_code'] = {
+      in: 'path',
+      description: 'Código do cliente',
+      required: true,
+      schema: { type: 'string' }
+    }
+    #swagger.parameters['measure_type'] = {
+      in: 'query',
+      description: 'Tipo de medição (WATER ou GAS)',
+      required: false,
+      schema: { type: 'string' }
+    }
+    #swagger.responses[200] = {
+      description: 'Lista de medições',
+       schema: { $ref: '#/definitions/ListMeasuresResponse' }
+    }
+    #swagger.responses[400] = {
+      description: 'Tipo de medição não permitida'
+    }
+    #swagger.responses[404] = {
+      description: 'Nenhuma medição encontrada'
+    }
+    #swagger.responses[500] = {
+      description: 'Erro interno do servidor'
+    }
+    */
     try {
       const { customer_code } = req.params as { customer_code: string }
       const { measure_type } = req.query as { measure_type?: string }
@@ -206,7 +287,7 @@ export default class MeasureController {
         },
       })
 
-      if (!measures) {
+      if (!measures || measures.length === 0) {
         return customError(
           res,
           404,
@@ -215,9 +296,17 @@ export default class MeasureController {
         )
       }
 
+      const transformedMeasures = measures.map((measure) => ({
+        measure_uuid: measure.measure_uuid,
+        measure_datetime: measure.measure_datetime,
+        measure_type: measure.measure_type,
+        has_confirmed: measure.has_confirmed,
+        image_url: measure.image_url || '',
+      }))
+
       return res.status(200).json({
         customer_code,
-        measures,
+        measures: transformedMeasures,
       })
     } catch (error) {
       console.error('Falha ao buscar as leituras', error)

@@ -5,7 +5,8 @@ export async function saveMeasure(
   measure_value: number,
   customer_code: string,
   measure_type: string,
-  measure_datetime: string
+  measure_datetime: string,
+  image_url: string
 ) {
   try {
     await prisma.measure.create({
@@ -15,6 +16,7 @@ export async function saveMeasure(
         customer_code,
         measure_type,
         measure_datetime: new Date(measure_datetime),
+        image_url,
       },
     })
   } catch (error) {
