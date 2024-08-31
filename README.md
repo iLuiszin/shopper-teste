@@ -3,13 +3,14 @@
 ### Índice
 
 <ul> 
-<a href="#descrição"><li>Descrição</li></a> 
-<a href="#instalação"><li>Instalação</li></a> 
-<a href="#configure-o-arquivo-env"><li>Configure o arquivo .env</li></a>
- <a href="#criação-do-banco-de-dados"><li>Criação do Banco de Dados</li></a> 
- <a href="#execução-da-aplicação"><li>Execução da Aplicação</li></a> 
+  <a href="#descrição"><li>Descrição</li></a> 
+  <a href="#instalação"><li>Instalação</li></a> 
+  <a href="#configure-o-arquivo-env"><li>Configure o arquivo .env</li></a>
+  <a href="#criação-do-banco-de-dados"><li>Criação do Banco de Dados</li></a> 
+  <a href="#execução-da-aplicação"><li>Execução da Aplicação</li></a> 
+  <a href="#testes"><li>Testes</li></a>
   <a href="#estrutura-do-projeto"><li>Estrutura do Projeto</li></a> 
-  </ul>
+</ul>
 
 ### Descrição
 
@@ -82,6 +83,16 @@ $ npm start
 
 ```
 http://localhost:80/api-docs
+```
+
+---
+
+### Testes
+
+##### Inicie os testes:
+
+```
+$ npm test
 ```
 
 ---

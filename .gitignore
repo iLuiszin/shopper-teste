@@ -4,3 +4,4 @@ database.db*
 migrations
 uploads
 swagger-output.json
+coverage
