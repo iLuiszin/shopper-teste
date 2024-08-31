@@ -4,6 +4,7 @@ const outputFile = './swagger-output.json'
 const endpointsFiles = ['./src/routes/MeasureRoutes.ts']
 
 async function generateSwaggerDocs() {
+  const PORT = process.env.PORT || 80
   const doc = {
     info: {
       title: 'API de Medidas',
@@ -11,9 +12,10 @@ async function generateSwaggerDocs() {
         'API para gerenciar e consultar medidas de consumo de água e gás.',
       version: '1.0.0',
     },
+    host: `localhost:${PORT}`,
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 80}/`,
+        url: `http://localhost:${PORT}`,
         description: 'Servidor localhost.',
       },
     ],

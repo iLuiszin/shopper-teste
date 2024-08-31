@@ -44,7 +44,6 @@ export async function checkExistingMeasure(
 
     return !!existingMeasure
   } catch (error) {
-    console.error('Falha ao verificar existeção de leitura' + error)
     throw new Error()
   }
 }

@@ -42,7 +42,21 @@ describe('MeasureController', () => {
     expect(response.body).toHaveProperty('error_description')
   })
 
-  it('should try to upload an invalid body', async () => {
+  it('should try to upload an invalid image', async () => {
+    const response = await request(app)
+      .post('/upload')
+      .send({
+        ...uploadBody,
+        customer_code: 'different_customer_code',
+        image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAU...',
+      })
+
+    expect(response.status).toBe(500)
+    expect(response.body).toHaveProperty('error_code')
+    expect(response.body).toHaveProperty('error_description')
+  })
+
+  it('should try to upload an invalid body (image not base64 encoded)', async () => {
     const response = await request(app)
       .post('/upload')
       .send({
